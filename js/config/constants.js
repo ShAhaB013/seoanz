@@ -1,9 +1,22 @@
 /**
  * تنظیمات و ثابت‌های برنامه
  * ES Module Version
+ * ✅ اضافه شده: Debug Mode Configuration
  */
 
 export const CONFIG = {
+    // ✅ تنظیمات Debug Mode (جدید)
+    DEBUG: {
+        ENABLED: false, // ✅ تغییر به true برای فعال کردن لاگ‌ها
+        LEVELS: {
+            info: true,     // لاگ‌های اطلاعاتی (آبی)
+            success: true,  // لاگ‌های موفقیت (سبز)
+            warn: true,     // لاگ‌های هشدار (نارنجی)
+            error: true,    // لاگ‌های خطا (قرمز) - همیشه فعال
+            debug: true     // لاگ‌های دیباگ (بنفش)
+        }
+    },
+    
     // محدودیت‌های SEO
     SEO_LIMITS: {
         MIN_KEYWORD_DENSITY: 0.5,
@@ -18,11 +31,11 @@ export const CONFIG = {
         MIN_H1_LENGTH: 20,
         MAX_H1_LENGTH: 60,
         
-        // ↓↓↓ محدودیت‌های طول پاراگراف (خوانایی) ↓↓↓
-        PARAGRAPH_LENGTH_STANDARD_MAX: 150,              // حداکثر طول استاندارد بر اساس Yoast
-        PARAGRAPH_LENGTH_ACCEPTABLE_MAX: 175,            // محدوده قابل‌قبول (برای پیام‌های راهنما)
-        PARAGRAPH_LENGTH_UNSUITABLE_MIN: 200,            // حداقل طول نامناسب: بالای ۲۰۰ کلمه
-        MAX_LONG_PARAGRAPHS_PERCENTAGE: 25               // حداکثر درصد پاراگراف‌های طولانی مطابق راهنمای Yoast
+        // محدودیت‌های طول پاراگراف (خوانایی)
+        PARAGRAPH_LENGTH_STANDARD_MAX: 150,
+        PARAGRAPH_LENGTH_ACCEPTABLE_MAX: 175,
+        PARAGRAPH_LENGTH_UNSUITABLE_MIN: 200,
+        MAX_LONG_PARAGRAPHS_PERCENTAGE: 25
     },
 
     // امتیازبندی SEO
@@ -140,7 +153,6 @@ export const CONFIG = {
         
         // Readability Analyzers
         readability: {
-            // ↓↓↓ این بخش جدید اضافه شد ↓↓↓
             paragraphLength: {
                 enabled: true,
                 priority: 11
@@ -167,6 +179,7 @@ export const CONFIG = {
 };
 
 // Export اجزای مهم به صورت جداگانه
+export const DEBUG_CONFIG = CONFIG.DEBUG;
 export const SEO_LIMITS = CONFIG.SEO_LIMITS;
 export const SCORE_THRESHOLDS = CONFIG.SCORE_THRESHOLDS;
 export const CHECK_STATUS = CONFIG.CHECK_STATUS;

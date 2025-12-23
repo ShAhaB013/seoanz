@@ -2,6 +2,7 @@
  * مدیریت TinyMCE Editor
  */
 
+import { logger } from '../utils/logger.js';
 import { debounce } from '../utils/helpers.js';
 import { countWords } from '../utils/text-utils.js';
 import { SEO_LIMITS } from '../config/constants.js';
@@ -165,7 +166,7 @@ export class TinyMCEManager {
                         this.instance = editor;
                         window.editorInstance = editor;
                         
-                        console.log('✅ TinyMCE آماده شد');
+                        logger.success('TinyMCE آماده شد');
                         
                         // تنظیم پاک کردن خودکار هایلایت با تاخیر هوشمند
                         this.setupSmartHighlightCleanup();
@@ -334,14 +335,14 @@ export class TinyMCEManager {
     handleTinyMCEErrors() {
         window.addEventListener('error', (e) => {
             if (e.message && e.message.includes('tinymce')) {
-                console.warn('⚠️ خطای TinyMCE:', e.message);
+                logger.warn('خطای TinyMCE:', e.message);
                 e.preventDefault();
             }
         });
         
         window.addEventListener('unhandledrejection', (e) => {
             if (e.reason && e.reason.message && e.reason.message.includes('tinymce')) {
-                console.warn('⚠️ خطای شبکه TinyMCE:', e.reason.message);
+                logger.warn('خطای شبکه TinyMCE:', e.reason.message);
                 e.preventDefault();
             }
         });

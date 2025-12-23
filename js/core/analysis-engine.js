@@ -1,9 +1,11 @@
 /**
  * موتور تحلیل مرکزی
  * هماهنگی و اجرای تمام Analyzer ها
+ * ✅ اصلاح شده: استفاده از logger به جای console.log
  */
 
 import AnalysisData from './analysis-data.js';
+import { logger } from '../utils/logger.js';
 
 export class AnalysisEngine {
     constructor(config = {}) {
@@ -56,7 +58,7 @@ export class AnalysisEngine {
         // مرتب‌سازی بر اساس اولویت (کمترین عدد = بالاترین اولویت)
         this.analyzers[analyzerType].sort((a, b) => a.priority - b.priority);
         
-        console.log(`✅ Analyzer ثبت شد: ${analyzer.name} (${analyzerType})`);
+        logger.success(`Analyzer ثبت شد: ${analyzer.name} (${analyzerType})`);
     }
     
     /**
@@ -86,7 +88,7 @@ export class AnalysisEngine {
      */
     async analyze(content, plainText, mainKeyword = '', secondaryKeywords = []) {
         if (this.isRunning) {
-            console.warn('⚠️ تحلیل در حال اجراست');
+            logger.warn('تحلیل در حال اجراست');
             return this.currentAnalysis;
         }
         
@@ -123,7 +125,7 @@ export class AnalysisEngine {
             analysisData.setStatus('completed');
             
             const duration = Date.now() - startTime;
-            console.log(`✅ تحلیل کامل شد در ${duration}ms`);
+            logger.debug(`تحلیل کامل شد در ${duration}ms`);
             
             // اعلام اتمام
             this.emit('complete', { analysisData, duration });
@@ -131,7 +133,7 @@ export class AnalysisEngine {
             return analysisData;
             
         } catch (error) {
-            console.error('❌ خطا در تحلیل:', error);
+            logger.error('خطا در تحلیل:', error);
             analysisData.setStatus('error');
             
             this.emit('error', { error, analysisData });
@@ -187,11 +189,11 @@ export class AnalysisEngine {
         const analyzers = this.getActiveAnalyzers(type);
         
         if (analyzers.length === 0) {
-            console.warn(`⚠️ هیچ ${type} analyzer فعالی وجود ندارد`);
+            logger.warn(`هیچ ${type} analyzer فعالی وجود ندارد`);
             return;
         }
         
-        console.log(`🔍 اجرای ${analyzers.length} ${type} analyzer...`);
+        logger.debug(`اجرای ${analyzers.length} ${type} analyzer...`);
         
         const tasks = analyzers
             .filter(analyzer => analyzer.shouldRun(analysisData))
@@ -319,7 +321,7 @@ export class AnalysisEngine {
             try {
                 callback(data);
             } catch (error) {
-                console.error(`خطا در listener ${event}:`, error);
+                logger.error(`خطا در listener ${event}:`, error);
             }
         });
     }
@@ -344,7 +346,7 @@ export class AnalysisEngine {
      */
     reset() {
         if (this.isRunning) {
-            console.warn('⚠️ نمی‌توان در حین اجرا reset کرد');
+            logger.warn('نمی‌توان در حین اجرا reset کرد');
             return;
         }
         this.currentAnalysis = null;

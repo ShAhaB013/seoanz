@@ -1,5 +1,6 @@
 /**
  * رندر کننده چک‌های SEO و خوانایی
+ * ✅ اصلاح شده: جلوگیری از duplicate click events
  */
 
 import { STATUS_ICONS } from '../config/constants.js';
@@ -59,9 +60,27 @@ export class ChecksRenderer {
     
     /**
      * رندر چک‌ها
+     * ✅ اصلاح شده: Clone container برای حذف event listeners قدیمی
      */
     renderChecks(checks, container, isReadability = false) {
         if (!container) return;
+        
+        // ✅ راه حل اصولی: Clone container برای حذف تمام event listeners قدیمی
+        const newContainer = container.cloneNode(false); // فقط خود container (بدون children)
+        container.parentNode.replaceChild(newContainer, container);
+        container = newContainer;
+        
+        // به‌روزرسانی reference در elements
+        if (isReadability) {
+            this.elements.readabilityChecks = container;
+        } else {
+            // بررسی اینکه کدام container است
+            if (container.id === 'checksList') {
+                this.elements.checksList = container;
+            } else if (container.id === 'suggestionsContent') {
+                this.elements.suggestionsContent = container;
+            }
+        }
         
         const fragment = document.createDocumentFragment();
         const tempDiv = document.createElement('div');
@@ -79,7 +98,7 @@ export class ChecksRenderer {
         container.innerHTML = '';
         container.appendChild(fragment);
         
-        // اتصال event listeners
+        // اتصال event listeners (حالا فقط یکبار روی container جدید)
         this.attachCheckEventListeners(container, isReadability);
         
         // ✅ اگر چک خوانایی است، event listener برای clearHighlights اضافه کن
@@ -318,7 +337,8 @@ export class ChecksRenderer {
     }
     
     /**
-     * اتصال event listeners به چک‌ها
+     * ✅ اتصال event listeners به چک‌ها (اصلاح شده)
+     * 🔧 تغییر: اضافه کردن e.stopPropagation() برای جلوگیری از duplicate events
      */
     attachCheckEventListeners(container, isReadability) {
         if (!container || !container.parentNode) return;
@@ -328,6 +348,7 @@ export class ChecksRenderer {
             // کلیک روی آیکون اطلاعات
             const infoIcon = e.target.closest('.check-info');
             if (infoIcon) {
+                e.stopPropagation(); // ✅ جلوگیری از bubble
                 const title = infoIcon.getAttribute('data-title');
                 const tooltip = infoIcon.getAttribute('data-tooltip');
                 this.modalManager.show(title, tooltip);
@@ -337,17 +358,21 @@ export class ChecksRenderer {
             // کلیک روی دکمه toggle
             const toggleButton = e.target.closest('.check-toggle');
             if (toggleButton) {
-                // ✅ دکمه همیشه فعال است - نیاز به بررسی disabled نیست
+                e.stopPropagation(); // ✅ جلوگیری از bubble
                 const checkId = toggleButton.getAttribute('data-check-id');
                 const checkTitle = toggleButton.getAttribute('data-check-title');
                 this.handleToggleClick(checkId, checkTitle, toggleButton, container);
                 return;
             }
             
-            // کلیک روی پیشنهاد کلمه کلیدی
+            // ✅ کلیک روی پیشنهاد کلمه کلیدی (اصلاح شده)
             const suggestionItem = e.target.closest('.keyword-suggestion-item');
             if (suggestionItem) {
+                e.stopPropagation(); // ✅ جلوگیری از bubble
+                e.preventDefault(); // ✅ جلوگیری از default action
+                
                 const keyword = suggestionItem.getAttribute('data-keyword');
+                
                 // این event را به UI Controller ارسال می‌کنیم با originalEvent
                 const customEvent = new CustomEvent('keywordSuggestionClick', { 
                     detail: { 

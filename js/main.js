@@ -1,6 +1,7 @@
 /**
  * نقطه ورود اصلی برنامه
  * Orchestrator - هماهنگی تمام ماژول‌ها
+ * ✅ اصلاح شده: استفاده از logger به جای console.log
  */
 
 // Core
@@ -23,6 +24,9 @@ import TinyMCEManager from './editor/tinymce-manager.js';
 import { extractText } from './utils/dom-utils.js';
 import { detectMainKeyword, detectSecondaryKeywords } from './utils/keyword-utils.js';
 import { debounce } from './utils/helpers.js';
+
+// ✅ Logger
+import { logger } from './utils/logger.js';
 
 /**
  * کلاس اصلی برنامه
@@ -49,7 +53,7 @@ class Application {
      */
     async init() {
         try {
-            console.log('🚀 راه‌اندازی برنامه...');
+            logger.info('🚀 راه‌اندازی برنامه...');
             
             // 1. راه‌اندازی TinyMCE
             this.editorManager = new TinyMCEManager();
@@ -68,9 +72,9 @@ class Application {
             this.engine.registerAnalyzers(seoAnalyzers, 'seo');
             this.engine.registerAnalyzers(readabilityAnalyzers, 'readability');
             
-            console.log('✅ Analysis Engine راه‌اندازی شد');
-            console.log(`   - ${seoAnalyzers.length} SEO Analyzer`);
-            console.log(`   - ${readabilityAnalyzers.length} Readability Analyzer`);
+            logger.success('✅ Analysis Engine راه‌اندازی شد');
+            logger.info(`   - ${seoAnalyzers.length} SEO Analyzer`);
+            logger.info(`   - ${readabilityAnalyzers.length} Readability Analyzer`);
             
             // 3. راه‌اندازی UI
             this.uiController = new UIController(this.editorManager);
@@ -79,10 +83,10 @@ class Application {
             // 4. Event Listeners
             this.attachEventListeners();
             
-            console.log('✅ برنامه با موفقیت راه‌اندازی شد');
+            logger.success('✅ برنامه با موفقیت راه‌اندازی شد');
             
         } catch (error) {
-            console.error('❌ خطا در راه‌اندازی برنامه:', error);
+            logger.error('❌ خطا در راه‌اندازی برنامه:', error);
         }
     }
     
@@ -92,20 +96,20 @@ class Application {
     attachEventListeners() {
         // Listen به event های engine
         this.engine.on('start', () => {
-            console.log('🔍 تحلیل شروع شد...');
+            logger.debug('🔍 تحلیل شروع شد...');
         });
         
         this.engine.on('progress', (data) => {
-            console.log(`  ⏳ ${data.analyzer} اجرا شد`);
+            logger.debug(`  ⏳ ${data.analyzer} اجرا شد`);
         });
         
         this.engine.on('complete', (data) => {
-            console.log(`✅ تحلیل کامل شد (${data.duration}ms)`);
-            console.log(`   امتیاز: ${data.analysisData.score}/100`);
+            logger.success(`✅ تحلیل کامل شد (${data.duration}ms)`);
+            logger.info(`   امتیاز: ${data.analysisData.score}/100`);
         });
         
         this.engine.on('error', (data) => {
-            console.error('❌ خطا در تحلیل:', data.error);
+            logger.error('❌ خطا در تحلیل:', data.error);
         });
     }
     
@@ -148,7 +152,7 @@ class Application {
      */
     async performAnalysis() {
         if (!this.editorManager.isReady()) {
-            console.warn('⚠️ ادیتور هنوز آماده نیست');
+            logger.warn('⚠️ ادیتور هنوز آماده نیست');
             return;
         }
         
@@ -221,7 +225,7 @@ class Application {
             this.uiController.updateAnalysisResults(analysisData);
             
         } catch (error) {
-            console.error('❌ خطا در تحلیل:', error);
+            logger.error('❌ خطا در تحلیل:', error);
         }
     }
     

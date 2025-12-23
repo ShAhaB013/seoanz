@@ -1,6 +1,7 @@
 /**
  * کنترلر اصلی UI
  * هماهنگی بین تمام ماژول‌های UI
+ * ✅ اصلاح شده: استفاده از logger
  */
 
 import ScoreDisplay from './score-display.js';
@@ -8,6 +9,7 @@ import TabsManager from './tabs-manager.js';
 import ModalManager from './modal-manager.js';
 import KeywordsInput from './keywords-input.js';
 import ChecksRenderer from './checks-renderer.js';
+import { logger } from '../utils/logger.js';
 
 export class UIController {
     constructor(editorManager) {
@@ -27,6 +29,10 @@ export class UIController {
         // ✅ ذخیره وضعیت هایلایت فعال
         this.highlightedCheckId = null;
         this.lastHighlightData = [];
+        
+        // ✅ برای جلوگیری از duplicate click
+        this._lastClickTime = 0;
+        this._lastClickKeyword = '';
         
         // Callback برای تغییرات
         this.onChangeCallback = null;
@@ -61,7 +67,7 @@ export class UIController {
         // Event listeners سراسری
         this.attachGlobalListeners();
         
-        console.log('✅ UI Controller راه‌اندازی شد');
+        logger.success('UI Controller راه‌اندازی شد');
     }
     
     /**
@@ -234,9 +240,28 @@ export class UIController {
     }
     
     /**
-     * مدیریت کلیک روی پیشنهاد کلمه کلیدی
+     * ✅ مدیریت کلیک روی پیشنهاد کلمه کلیدی (اصلاح شده)
+     * 🔧 تغییرات:
+     * 1. اضافه کردن debounce برای جلوگیری از duplicate clicks
+     * 2. استفاده از keywordsInput.normalizeKeyword برای یکنواختی
      */
     handleKeywordSuggestionClick(keyword, originalEvent = null) {
+        // ✅ Debounce: جلوگیری از click های متوالی (در 300ms)
+        const now = Date.now();
+        const tempNormalized = this.keywordsInput.normalizeKeyword(keyword);
+        
+        if (
+            this._lastClickKeyword === tempNormalized && 
+            now - this._lastClickTime < 300
+        ) {
+            logger.debug('Duplicate click ignored:', tempNormalized);
+            return; // ignore duplicate click
+        }
+        
+        // ✅ به‌روزرسانی زمان و keyword آخرین click
+        this._lastClickTime = now;
+        this._lastClickKeyword = tempNormalized;
+        
         // اگر event ارسال شده، از آن استفاده کن
         let clickedElement = null;
         if (originalEvent && originalEvent.target) {
@@ -255,7 +280,7 @@ export class UIController {
         if (!clickedElement) return;
         
         const displayKeyword = (keyword || '').trim();
-        const normalizedKeyword = this.normalizeKeywordInput(keyword);
+        const normalizedKeyword = tempNormalized;
         if (!normalizedKeyword) return;
         
         const parentSuggestions = clickedElement.closest('.keyword-suggestions');
@@ -264,22 +289,31 @@ export class UIController {
 
         const currentKeywords = this.keywordsInput.getKeywords();
         
-        if (isMainKeywordSuggestion || !currentKeywords.mainKeyword) {
+        // منطق تصمیم‌گیری
+        if (isMainKeywordSuggestion) {
+            // حالت 1: suggestion از بخش main است
             this.keywordsInput.setKeywords(normalizedKeyword, currentKeywords.secondaryKeywords);
-            this.keywordsInput.showTemporaryMessage('کلمه کلیدی اصلی تنظیم شد: ' + (displayKeyword || normalizedKeyword), 'success');
+            this.keywordsInput.showTemporaryMessage('کلمه کلیدی اصلی تنظیم شد: ' + displayKeyword, 'success');
             
         } else if (isSecondaryKeywordSuggestion) {
+            // حالت 2: suggestion از بخش secondary است
             const result = this.keywordsInput.addSecondaryKeyword(normalizedKeyword);
             if (result.status === 'added') {
-                this.keywordsInput.showTemporaryMessage('کلمه کلیدی فرعی اضافه شد: ' + (displayKeyword || normalizedKeyword), 'success');
+                this.keywordsInput.showTemporaryMessage('کلمه کلیدی فرعی اضافه شد: ' + displayKeyword, 'success');
             } else if (result.status === 'duplicate') {
                 this.keywordsInput.showTemporaryMessage('این کلمه قبلاً اضافه شده است', 'warning');
             }
             
+        } else if (!currentKeywords.mainKeyword) {
+            // حالت 3: نوع مشخص نیست و main خالی است
+            this.keywordsInput.setKeywords(normalizedKeyword, currentKeywords.secondaryKeywords);
+            this.keywordsInput.showTemporaryMessage('کلمه کلیدی اصلی تنظیم شد: ' + displayKeyword, 'success');
+            
         } else {
+            // حالت 4: نوع مشخص نیست و main پر است
             const result = this.keywordsInput.addSecondaryKeyword(normalizedKeyword);
             if (result.status === 'added') {
-                this.keywordsInput.showTemporaryMessage('کلمه کلیدی فرعی اضافه شد: ' + (displayKeyword || normalizedKeyword), 'success');
+                this.keywordsInput.showTemporaryMessage('کلمه کلیدی فرعی اضافه شد: ' + displayKeyword, 'success');
             } else if (result.status === 'duplicate') {
                 this.keywordsInput.showTemporaryMessage('این کلمه قبلاً اضافه شده است', 'warning');
             }
@@ -407,15 +441,6 @@ export class UIController {
     }
     
     /**
-     * ✅ استخراج پاراگراف‌های طولانی از محتوای فعلی ویرایشگر
-     */
-    extractParagraphsFromContent(content, originalParagraphs) {
-        // ✅ استفاده از منطق تطبیق موجود در TinyMCE Manager
-        // این متد فقط برای تطبیق پاراگراف‌ها استفاده می‌شود
-        return originalParagraphs; // برای حالا، از داده‌های اصلی استفاده می‌کنیم
-    }
-    
-    /**
      * پاک کردن هایلایت‌ها
      */
     handleClearHighlights(checkId = null) {
@@ -465,10 +490,6 @@ export class UIController {
      */
     getKeywords() {
         return this.keywordsInput.getKeywords();
-    }
-    
-    normalizeKeywordInput(keyword = '') {
-        return (keyword || '').replace(/\s+/g, ' ').trim();
     }
     
     dispatchClearHighlights(checkId = null) {

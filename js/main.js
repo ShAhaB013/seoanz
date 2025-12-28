@@ -2,6 +2,7 @@
  * نقطه ورود اصلی برنامه
  * Orchestrator - هماهنگی تمام ماژول‌ها
  * ✅ اصلاح شده: استفاده از logger به جای console.log
+ * ✅ اضافه شده: Initialize Stopwords Manager
  */
 
 // Core
@@ -27,6 +28,9 @@ import { debounce } from './utils/helpers.js';
 
 // ✅ Logger
 import { logger } from './utils/logger.js';
+
+// ✅ Stopwords Manager
+import { stopwordsManager } from './utils/stopwords-loader.js';
 
 /**
  * کلاس اصلی برنامه
@@ -55,11 +59,14 @@ class Application {
         try {
             logger.info('🚀 راه‌اندازی برنامه...');
             
-            // 1. راه‌اندازی TinyMCE
+            // ✅ 1. بارگذاری Stopwords (اولین مرحله)
+            await this.initStopwords();
+            
+            // 2. راه‌اندازی TinyMCE
             this.editorManager = new TinyMCEManager();
             await this.editorManager.init(() => this.scheduleAnalysis());
             
-            // 2. راه‌اندازی Analysis Engine
+            // 3. راه‌اندازی Analysis Engine
             this.engine = new AnalysisEngine({
                 parallel: CONFIG.ANALYSIS.PARALLEL_EXECUTION,
                 timeout: CONFIG.ANALYSIS.TIMEOUT
@@ -76,17 +83,44 @@ class Application {
             logger.info(`   - ${seoAnalyzers.length} SEO Analyzer`);
             logger.info(`   - ${readabilityAnalyzers.length} Readability Analyzer`);
             
-            // 3. راه‌اندازی UI
+            // 4. راه‌اندازی UI
             this.uiController = new UIController(this.editorManager);
             this.uiController.init(() => this.scheduleAnalysis());
             
-            // 4. Event Listeners
+            // 5. Event Listeners
             this.attachEventListeners();
             
             logger.success('✅ برنامه با موفقیت راه‌اندازی شد');
             
         } catch (error) {
             logger.error('❌ خطا در راه‌اندازی برنامه:', error);
+        }
+    }
+    
+    /**
+     * ✅ مقداردهی اولیه Stopwords Manager
+     */
+    async initStopwords() {
+        try {
+            logger.info('📚 بارگذاری Stopwords...');
+            
+            const success = await stopwordsManager.load();
+            
+            if (success) {
+                logger.success(`✅ ${stopwordsManager.size()} stopword بارگذاری شد از فایل`);
+            } else {
+                logger.warn(`⚠️ ${stopwordsManager.size()} stopword بارگذاری شد از لیست پیش‌فرض`);
+            }
+            
+            // ✅ در حالت debug، نمونه‌ای از stopwords را نمایش بده
+            if (CONFIG.DEBUG?.ENABLED) {
+                const sample = Array.from(stopwordsManager.getAll()).slice(0, 10);
+                logger.debug('نمونه stopwords:', sample.join(', '));
+            }
+            
+        } catch (error) {
+            logger.error('❌ خطا در بارگذاری stopwords:', error);
+            // ادامه برنامه با fallback
         }
     }
     
@@ -235,6 +269,15 @@ class Application {
     async analyzeManually() {
         await this.performAnalysis();
     }
+    
+    /**
+     * ✅ ری‌لود Stopwords (برای استفاده در console)
+     */
+    async reloadStopwords() {
+        logger.info('🔄 ری‌لود Stopwords...');
+        await stopwordsManager.reload();
+        logger.success(`✅ ${stopwordsManager.size()} stopword بارگذاری مجدد شد`);
+    }
 }
 
 // ✅ بهینه‌سازی: فیلتر خطاهای extension
@@ -260,5 +303,8 @@ if (document.readyState === 'loading') {
 
 // Export برای دسترسی جهانی
 window.MainApp = app;
+
+// ✅ Export stopwordsManager برای دسترسی از console
+window.stopwordsManager = stopwordsManager;
 
 export default app;

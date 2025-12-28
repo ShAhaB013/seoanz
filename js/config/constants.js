@@ -2,18 +2,98 @@
  * تنظیمات و ثابت‌های برنامه
  * ES Module Version
  * ✅ اضافه شده: Debug Mode Configuration
+ * ✅ اضافه شده: Semantic Analysis Configuration
  */
 
 export const CONFIG = {
-    // ✅ تنظیمات Debug Mode (جدید)
+    // ✅ تنظیمات Debug Mode
     DEBUG: {
-        ENABLED: false, // ✅ تغییر به true برای فعال کردن لاگ‌ها
+        ENABLED: true, // ✅ تغییر به true برای فعال کردن لاگ‌ها
         LEVELS: {
             info: true,     // لاگ‌های اطلاعاتی (آبی)
             success: true,  // لاگ‌های موفقیت (سبز)
             warn: true,     // لاگ‌های هشدار (نارنجی)
             error: true,    // لاگ‌های خطا (قرمز) - همیشه فعال
             debug: true     // لاگ‌های دیباگ (بنفش)
+        }
+    },
+    
+    // ✅ تنظیمات Semantic Analysis (جدید)
+    SEMANTIC_ANALYSIS: {
+        // وزن‌های امتیازدهی نهایی
+        WEIGHTS: {
+            FREQUENCY: 0.20,        // 20% - تکرار در متن
+            CO_OCCURRENCE: 0.25,    // 25% - همزمانی با main keyword
+            CONTEXT: 0.20,          // 20% - موقعیت در ساختار
+            PROXIMITY: 0.15,        // 15% - نزدیکی فیزیکی
+            QUALITY: 0.20           // 20% - کیفیت ساختاری
+        },
+        
+        // تنظیمات Co-occurrence
+        CO_OCCURRENCE: {
+            MIN_RATIO: 0.3,         // حداقل نسبت برای امتیاز
+            MAX_SCORE: 25           // حداکثر امتیاز
+        },
+        
+        // تنظیمات Context
+        CONTEXT: {
+            H1_SCORE: 15,           // امتیاز H1
+            H2H3_SCORE: 10,         // امتیاز H2-H3
+            FIRST_PARAGRAPH: 8,     // امتیاز پاراگراف اول
+            MAX_SCORE: 20           // حداکثر امتیاز
+        },
+        
+        // تنظیمات Proximity
+        PROXIMITY: {
+            SAME_SENTENCE: 15,      // امتیاز همان جمله
+            NEAR_SENTENCE: 5,       // امتیاز جملات نزدیک
+            WINDOW_SIZE: 3,         // تعداد جملات قبل/بعد
+            MAX_SCORE: 15           // حداکثر امتیاز
+        },
+        
+        // تنظیمات Quality
+        QUALITY: {
+            WORD_COUNT_SCORES: {
+                4: 8,               // 4 کلمه
+                3: 6,               // 3 کلمه
+                2: 4,               // 2 کلمه
+                1: 1                // 1 کلمه
+            },
+            MAX_FREQUENCY_SCORE: 10,
+            OPTIMAL_LENGTH_MIN: 10,
+            OPTIMAL_LENGTH_MAX: 50
+        },
+        
+        // تنظیمات Stopwords
+        STOPWORDS: {
+            REJECT_RATIO: 0.6,      // حذف کامل اگر > 60%
+            HEAVY_PENALTY: 0.5,     // جریمه -5 اگر > 50%
+            MEDIUM_PENALTY: 0.3,    // جریمه -3 اگر > 30%
+            LIGHT_PENALTY: 0.1      // جریمه -1 اگر > 10%
+        },
+        
+        // تنظیمات Clustering
+        CLUSTERING: {
+            SIMILARITY_THRESHOLD: 0.7,  // بیش از 70% مشابه
+            ENABLE_DIVERSITY: true       // فعال‌سازی clustering
+        },
+        
+        // Threshold های Adaptive
+        THRESHOLDS: {
+            MAIN_KEYWORD: {
+                WORDS_200: 15,      // کمتر از 200 کلمه
+                WORDS_400: 20,      // 200-400 کلمه
+                WORDS_700: 25,      // 400-700 کلمه
+                WORDS_1000: 30,     // 700-1000 کلمه
+                WORDS_MORE: 35      // بیشتر از 1000 کلمه
+            },
+            SECONDARY_KEYWORD: {
+                WORDS_200: 10,
+                WORDS_400: 15,
+                WORDS_700: 20,
+                WORDS_1000: 25,
+                WORDS_MORE: 30
+            }
         }
     },
     
@@ -180,6 +260,7 @@ export const CONFIG = {
 
 // Export اجزای مهم به صورت جداگانه
 export const DEBUG_CONFIG = CONFIG.DEBUG;
+export const SEMANTIC_ANALYSIS_CONFIG = CONFIG.SEMANTIC_ANALYSIS;
 export const SEO_LIMITS = CONFIG.SEO_LIMITS;
 export const SCORE_THRESHOLDS = CONFIG.SCORE_THRESHOLDS;
 export const CHECK_STATUS = CONFIG.CHECK_STATUS;
